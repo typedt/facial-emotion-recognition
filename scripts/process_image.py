@@ -29,18 +29,21 @@ at prompt.
 
 
 import os
-from os.path import isfile, join
+from os.path import isfile, join, basename, isdir
 import csv
 import cv2
 from warnings import warn
 from faceemo.utils import *
+from faceemo.feature import *
 
 
 LABELS = ('happy', 'sad', 'neutral')
 
+WRITE_IMAGE = False
+
 
 def extract_landmarks(imgfile, detector, aligner):
-    # try:
+    try:
         img = cv2.imread(imgfile)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         landmarks = detector.get_landmarks(gray)
@@ -49,25 +52,39 @@ def extract_landmarks(imgfile, detector, aligner):
         else:
             warn(imgfile + " does not have valid features.")
             return None
-    # except:
-    #     warn(imgfile + ": something went wrong")
-    #     return None
+    except:
+        warn(imgfile + ": something went wrong")
+        return None
 
 
-def convert_landmarks_to_row(landmarks, label):
-    row = np.append(landmarks.flatten(), label)
+def align_image(imgfile, detector, aligner):
+    img = cv2.imread(imgfile)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    landmarks = detector.get_landmarks(gray)
+    if landmarks is not None:
+        return aligner.align_image(gray, landmarks)
+    else:
+        warn(imgfile + " does not have valid features.")
+        return None
+
+
+def convert_features_to_row(features, label):
+    row = np.append(features.flatten(), label)
     return row
 
 
 if __name__ == '__main__':
     # get root folder
     root_folder = input("Root folder of images:")
+    if WRITE_IMAGE:
+        output_image_folder = input("Output image folder:")
 
     # prepare for feature extraction
     predictor_file = os.path.abspath("../data/support/shape_predictor_68_face_landmarks.dat")
     predictor = dlib.shape_predictor(predictor_file)
     detector = FaceDetector(predictor)
-    aligner = FaceAligner()
+    aligner = FaceAligner(desiredLeftEye=(0.35, 0.4),
+                          desiredWidth=256, desiredHeight=256)
 
     # open csv file as output file
     with open('train.csv', 'w', newline='') as csvfile:
@@ -79,10 +96,25 @@ if __name__ == '__main__':
             dir = join(root_folder, label)
             files = [join(dir, f) for f in os.listdir(dir) if isfile(join(dir, f))
                      and not f.startswith(".")]
+            if WRITE_IMAGE:
+                outputdir = join(output_image_folder, label)
+                if not isdir(outputdir):
+                    os.makedir(outputdir)
             rows = []
             for f in files:
+                # write aligned image to output folder
+                if WRITE_IMAGE:
+                    aligned = align_image(f, detector, aligner)
+                    if aligned is not None:
+                        outputf = join(outputdir, basename(f))
+                        print(outputf)
+                        cv2.imwrite(outputf, aligned)
+
+                # extract features and save to csv
                 landmarks = extract_landmarks(f, detector, aligner)
-                print(landmarks.T)
-                row = convert_landmarks_to_row(landmarks, label)
-                rows.append(row)
+                if landmarks is not None:
+                    print(landmarks.T)
+                    features = features_by_neighbors_and_inner_mouth_angles(landmarks)
+                    row = convert_features_to_row(features, label)
+                    rows.append(row)
             writer.writerows(rows)

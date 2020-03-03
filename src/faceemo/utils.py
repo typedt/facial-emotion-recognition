@@ -14,7 +14,8 @@ FACIAL_LANDMARKS_68_IDXS = OrderedDict([
     ("right_eye", (36, 42)),
     ("left_eye", (42, 48)),
     ("nose", (27, 36)),
-    ("jaw", (0, 17))
+    ("jaw", (0, 17)),
+    ("inner_mouth_right_upper", (60, 63)),
 ])
 
 
