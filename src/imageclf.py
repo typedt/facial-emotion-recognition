@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
 
-import cv2
-import numpy as np
+import sys
 import dlib
 import os
+import cv2
+import numpy as np
 import joblib
 from faceemo.utils import *
 from faceemo.feature import *
@@ -35,34 +36,28 @@ def apply_clf(landmarks, pca_params, clf):
 
 
 if __name__ == '__main__':
+    imgfile = input("Input image path:")
+    if not imgfile:
+        sys.exit(0)
+
+    img = cv2.imread(imgfile)
+    if img is None:
+        raise RuntimeError("Can no open or can not read img file.")
+
     predictor = dlib.shape_predictor(PREDICTOR_FILE)
     detector = FaceDetector(predictor)
     aligner = FaceAligner()
     clf = joblib.load(CLF_FILE)
     pca_params = joblib.load(PCA_PARAM_FILE)
 
-    # output label that will be updated if emotion changes
-    output = ''
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    landmarks = detector.get_landmarks(gray)
+    img_aligned = aligner.align_image(gray, landmarks)
+    cv2.imshow('Aligned face', img_aligned)
 
-    # open webcam
-    cap = cv2.VideoCapture(0)
-    while (cap.isOpened()):
-        # capture
-        ret, frame = cap.read()
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        landmarks = detector.get_landmarks(gray)
-        if landmarks is not None:
-            aligned = aligner.align_image(gray, landmarks)
-            landmarks_af = aligner.align_landmarks(landmarks, round=True)
-            prediction = apply_clf(landmarks_af, pca_params, clf)
-            circle_landmarks(aligned, landmarks_af)
-            cv2.imshow('Aligned face', aligned)
-            print(prediction[0])
+    landmarks_aligned = aligner.align_landmarks(landmarks, round=True)
+    prediction = apply_clf(landmarks_aligned, pca_params, clf)
+    print("Predicted emotion: " + prediction[0])
 
-        # exit when user presses `q`
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # release web cam handle and clean up
-    cap.release()
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
