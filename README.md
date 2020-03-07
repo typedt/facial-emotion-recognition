@@ -11,10 +11,20 @@ pip install --user --requirement requirements.txt
 
 ## Run the app
 
-From the root directory of the project, run
+To run the emotion detection from a real time web cam:
 ```zsh
+# From the root directory of the project, run
 python src/app.py
 ```
+
+To run the emotion detection with a given image file:
+```zsh
+# From the root directory of the project, run
+python src/imageclf.py
+```
+
 To exit the app, click the window showing your real time image,
 make sure it is activated, and then press `q` from the keyboard.
-Please be patient, it takes a few seconds for the app to shutdown.
+Please be patient, for the web cam windows, it takes a few seconds
+for the app to shutdown.
+
