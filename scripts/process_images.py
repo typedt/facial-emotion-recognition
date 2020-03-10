@@ -118,7 +118,7 @@ if __name__ == '__main__':
                     fout = join(outputdir, basename(f))
                     cv2.imwrite(fout, image_af)
             else:
-                warn(imgfile + " does not have valid features.")
+                warn(f + " does not have valid features.")
                 continue
 
     print("Writing landmarks to csv file %s ..." % landmark_csv)
