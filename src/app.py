@@ -9,29 +9,14 @@ from faceemo.utils import *
 from faceemo.feature import *
 
 
-CLF_FILE = os.path.abspath('data/classify/classifier.joblib')
+CLF_FILE = os.path.abspath('data/classify/classifier_neighbors.joblib')
 PCA_PARAM_FILE = os.path.abspath('data/classify/pca_params.joblib')
 PREDICTOR_FILE = os.path.abspath("data/support/shape_predictor_68_face_landmarks.dat")
 
 
-def pc_cords(X, mu, V):
-    z = X - mu
-    p = np.dot(z, V.T)
-    return p
-
-
-def apply_clf(landmarks, pca_params, clf):
-    '''
-    Applies the classifier on extracted and aligned landmarks.
-
-    Returns:
-    Predicted class label
-    '''
-    features = features_by_neighbors_and_inner_mouth_angles(landmarks)
-    mu = pca_params.get('mu')
-    V = pca_params.get('V')
-    x = pc_cords(features, mu, V)
-    return clf.predict([x])
+def apply_clf(landmarks, clf):
+    features = features_by_neighbors(landmarks)
+    return clf.predict([features])
 
 
 if __name__ == '__main__':
@@ -54,7 +39,7 @@ if __name__ == '__main__':
         if landmarks is not None:
             aligned = aligner.align_image(gray, landmarks)
             landmarks_af = aligner.align_landmarks(landmarks, round=True)
-            prediction = apply_clf(landmarks_af, pca_params, clf)
+            prediction = apply_clf(landmarks_af, clf)
             circle_landmarks(aligned, landmarks_af)
             cv2.imshow('Aligned face', aligned)
             print(prediction[0])
