@@ -9,6 +9,7 @@ from faceemo.utils import *
 from faceemo.feature import *
 
 
+CLF_FILE = os.path.abspath('data/classify/classifier.joblib')
 CLF_FILE = os.path.abspath('data/classify/classifier_neighbors.joblib')
 PCA_PARAM_FILE = os.path.abspath('data/classify/pca_params.joblib')
 PREDICTOR_FILE = os.path.abspath("data/support/shape_predictor_68_face_landmarks.dat")
@@ -25,9 +26,6 @@ if __name__ == '__main__':
     aligner = FaceAligner()
     clf = joblib.load(CLF_FILE)
     pca_params = joblib.load(PCA_PARAM_FILE)
-
-    # output label that will be updated if emotion changes
-    output = ''
 
     # open webcam
     cap = cv2.VideoCapture(0)
